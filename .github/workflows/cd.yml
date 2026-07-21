@@ -16,9 +16,19 @@ jobs:
       uses: appleboy/ssh-action@v1.0.0
       with:
         host: ${{ secrets.HOST_DNS }}
-        username: ubuntu   # Jo Amazon Linux EC2 hoy to 'ec2-user' lakho
+        username: ec2-user   # Jo Ubuntu OS hoy to 'ubuntu' lakho
         key: ${{ secrets.EC2_SSH_KEY }}
         script: |
+          # Automatically install Docker if not installed
+          if ! command -v docker &> /dev/null; then
+              echo "Docker not found, installing..."
+              sudo yum update -y || sudo apt update -y
+              sudo yum install docker -y || sudo apt install docker.io -y
+              sudo systemctl start docker
+              sudo systemctl enable docker
+          fi
+
+          # Run application container
           sudo docker stop myapp-container || true
           sudo docker rm myapp-container || true
           sudo docker pull ${{ secrets.DOCKER_USERNAME }}/myapp:latest
